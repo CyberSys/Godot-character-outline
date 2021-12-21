@@ -6,6 +6,7 @@ https://www.youtube.com/watch?v=eUFjj2vVRYk
 
 ## TODO
 
+* CharaOutlineRegisterのエディタ補助機能実装
 * ドキュメント
 * 高速化
 
