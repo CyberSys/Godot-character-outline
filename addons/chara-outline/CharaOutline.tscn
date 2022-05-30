@@ -1,8 +1,8 @@
 [gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://addons/chara-outline/CharaOutline.gd" type="Script" id=1]
-[ext_resource path="res://addons/chara-outline/outline.shader" type="Shader" id=2]
-[ext_resource path="res://addons/chara-outline/gaussian.tres" type="Shader" id=3]
+[ext_resource path="res://addons/chara-outline/detect_outline.shader" type="Shader" id=2]
+[ext_resource path="res://addons/chara-outline/draw_outline.tres" type="Shader" id=3]
 
 [sub_resource type="Environment" id=1]
 background_mode = 1
@@ -10,10 +10,6 @@ background_mode = 1
 [sub_resource type="ShaderMaterial" id=4]
 shader = ExtResource( 2 )
 shader_param/luma_coef = 1024.0
-shader_param/line_size = 1.0
-
-[sub_resource type="ViewportTexture" id=2]
-viewport_path = NodePath("Viewport")
 
 [sub_resource type="ViewportTexture" id=5]
 viewport_path = NodePath("Viewport")
@@ -22,8 +18,10 @@ viewport_path = NodePath("Viewport")
 resource_local_to_scene = true
 shader = ExtResource( 3 )
 shader_param/line_color = Color( 0, 0, 0, 1 )
-shader_param/line_coef = 0.3
 shader_param/source_texture = SubResource( 5 )
+
+[sub_resource type="ViewportTexture" id=2]
+viewport_path = NodePath("Viewport")
 
 [node name="CharaOutline" type="Node"]
 script = ExtResource( 1 )
@@ -45,20 +43,14 @@ material = SubResource( 4 )
 margin_right = 40.0
 margin_bottom = 40.0
 
-[node name="Debug" type="TextureRect" parent="."]
-visible = false
-margin_right = 455.0
-margin_bottom = 256.0
-texture = SubResource( 2 )
-expand = true
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
 [node name="OutlineFilter" type="ColorRect" parent="."]
 material = SubResource( 3 )
 margin_right = 40.0
 margin_bottom = 40.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+
+[node name="Debug" type="TextureRect" parent="."]
+visible = false
+margin_right = 1024.0
+margin_bottom = 600.0
+texture = SubResource( 2 )
+expand = true

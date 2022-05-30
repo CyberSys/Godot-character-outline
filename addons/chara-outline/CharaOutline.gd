@@ -17,7 +17,6 @@ onready var sobel_filter:ColorRect = $Viewport/SobelFilter
 onready var outline_filter:ColorRect = $OutlineFilter
 
 export(int, LAYERS_3D_RENDER) var layers_for_draw_target:int = 1 << 19
-var currently_object_id:int = 0
 var max_objects:int = 64
 
 func _ready( ):
@@ -32,35 +31,26 @@ func _clear_all_nodes( ) -> void:
 
 func _generate_nodes( ) -> void:
 	self._clear_all_nodes( )
-	self.currently_object_id = 0
-	self._check_registers( )
+	self._check_registers( self.get_tree( ).get_root( ) )
 
-func _check_registers( ):
-	for t in self.get_children( ):
+func _check_registers( n:Node ):
+	for t in n.get_children( ):
 		if t is CharaOutlineRegister:
-			var root:Node = t.get_node( t.register_path )
-			self._copy_nodes( root.get_parent( ), root, t )
+			var root:Node = t.get_node( t.target_path )
+			self._copy_nodes( root, t )
 
-func _copy_nodes( parent:Node, n:Node, cor:CharaOutlineRegister ) -> void:
+		self._check_registers( t )
+
+func _copy_nodes( n:Node, cor:CharaOutlineRegister ):
 	if n is MeshInstance:
-		self._copy_mesh_instance( parent, n, cor )
+		self._copy_mesh_instance( n.get_parent( ), n, cor )
 
 	for t in n.get_children( ):
-		self._copy_nodes( n, t, cor )
+		self._copy_nodes( t, cor )
 
 func _copy_mesh_instance( parent:Node, mi:MeshInstance, cor:CharaOutlineRegister ):
-	if mi.mesh == null or mi.mesh is PrimitiveMesh or ( group_name in mi.get_groups( ) ):
+	if mi.mesh == null or ( self.group_name in mi.get_groups( ) ):
 		return
-	if cor.enable_target_list and ( not cor.target_list.has( mi.name ) ):
-		return
-
-	var object_id:int = self.currently_object_id + 1
-	if cor.outline_disable:
-		object_id = 0
-	elif cor.enable_target_list:
-		object_id = int( cor.target_list.get( mi.name ) )
-	else:
-		self.currently_object_id += 1
 
 	var copyed: = MeshInstance.new( )
 	parent.add_child( copyed )
@@ -71,14 +61,15 @@ func _copy_mesh_instance( parent:Node, mi:MeshInstance, cor:CharaOutlineRegister
 	copyed.software_skinning_transform_normals = mi.software_skinning_transform_normals
 	copyed.visible = mi.visible
 	copyed.layers = self.layers_for_draw_target
+	mi.layers = mi.layers & ( ~self.layers_for_draw_target )
 
 	var factor:float = 1.0 / float( self.max_objects )
-	var matr: = SpatialMaterial.new()
+	var matr: = SpatialMaterial.new( )
 	matr.flags_unshaded = true
-	if object_id == 0:
-		matr.albedo_color = Color( 0.0, 1.0, 0.0 )
+	if cor.hide:
+		matr.albedo_color = Color( 0.0, 0.0, cor.priority )
 	else:
-		matr.albedo_color = Color( object_id * factor, 0.0, 0.0 )
+		matr.albedo_color = Color( ( cor.object_id + 1 ) * factor, cor.line_width, cor.priority )
 	matr.params_cull_mode = SpatialMaterial.CULL_DISABLED
 	copyed.material_override = matr
 
