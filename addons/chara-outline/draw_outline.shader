@@ -1,7 +1,4 @@
-[gd_resource type="Shader" format=2]
-
-[resource]
-code = "/*
+/*
 	アウトライン描画シェーダー by あるる（きのもと 結衣）
 	Draw Outline Shader by KINOMOTO Yui @arlez80
 
@@ -24,8 +21,8 @@ void fragment( )
 	vec3 rgb_right = texture( source_texture, uv + vec2( 1, 0 ) * SCREEN_PIXEL_SIZE ).rgb;
 
 	float line_width = max(
-		rgb_center.g,
-		max( max( rgb_up.g, rgb_down.g ), max( rgb_left.g, rgb_right.g ) )
+		rgb_center.r,
+		max( max( rgb_up.r, rgb_down.r ), max( rgb_left.r, rgb_right.r ) )
 	);
 	float luma = rgb_center.r + ( rgb_up.r + rgb_down.r + rgb_left.r + rgb_right.r ) / ( line_width * 3.0 );
 
@@ -38,4 +35,3 @@ void fragment( )
 		)
 	);
 }
-"

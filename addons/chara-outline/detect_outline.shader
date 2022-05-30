@@ -6,16 +6,27 @@
 */
 
 shader_type canvas_item;
-render_mode unshaded, blend_disabled, skip_vertex_transform;
+render_mode unshaded, skip_vertex_transform, blend_disabled;
 
-uniform float luma_coef = 1024.0;
-
-void check_priority( inout float line_width, inout float line_priority, in vec3 c )
+float check_priority( in vec3 center, in vec3 pixel )
 {
-	if( line_priority < c.b ) {
-		line_priority = c.b;
-		line_width = c.g;
+	float priority = 0.0;
+
+	if( 0.0 < pixel.b ) {
+		// 比較対象が隠しの場合
+		if( pixel.g < center.g ) {
+			priority = float( 0.0 < center.r );
+		}
+	}else if( 0.0 < center.b ) {
+		// 自分が隠しの場合
+		if( center.g < pixel.g ) {
+			priority = float( 0.0 < pixel.r );
+		}
+	}else {
+		priority = float( center.r != pixel.r );
 	}
+
+	return priority;
 }
 
 void fragment( )
@@ -24,37 +35,30 @@ void fragment( )
 		入力：
 			R: 物体ID
 				ここが違うとアウトラインとして抽出される。なにもない所は0
-			G: 線分の太さ
-			B: 優先度
-				高い方の線分太さが優先される
+			G: 深度（DEPTH_TEXTUREと違って手前が1.0）
+			B: 線分隠し用オブジェクトか？
 	*/
 
 	vec3 color = texture( SCREEN_TEXTURE, SCREEN_UV ).rgb;
 
-	//vec3 minus_x = texture( SCREEN_TEXTURE, SCREEN_UV + vec2( -1.0, 0.0 ) * SCREEN_PIXEL_SIZE ).rgb;
-	vec3 plus_x = texture( SCREEN_TEXTURE, SCREEN_UV + vec2( 1.0, 0.0 ) * SCREEN_PIXEL_SIZE ).rgb;
-	//vec3 minus_y = texture( SCREEN_TEXTURE, SCREEN_UV + vec2( 0.0, -1.0 ) * SCREEN_PIXEL_SIZE ).rgb;
-	vec3 plus_y = texture( SCREEN_TEXTURE, SCREEN_UV + vec2( 0.0, 1.0 ) * SCREEN_PIXEL_SIZE ).rgb;
-	//vec3 x = - minus_x + plus_x;
-	//vec3 y = - minus_y + plus_y;
+	vec2 plus_x_uv = SCREEN_UV + vec2( 1.0, 0.0 ) * SCREEN_PIXEL_SIZE;
+	vec2 plus_y_uv = SCREEN_UV + vec2( 0.0, 1.0 ) * SCREEN_PIXEL_SIZE;
+	vec3 plus_x = texture( SCREEN_TEXTURE, plus_x_uv ).rgb;
+	vec3 plus_y = texture( SCREEN_TEXTURE, plus_y_uv ).rgb;
+
 	vec3 x = - color + plus_x;
 	vec3 y = - color + plus_y;
-	vec3 filtered = sqrt( x * x + y * y );
-
-	float line_width = color.g;
-	float line_width_priority = color.b;
-	//check_priority( line_width, line_width_priority, minus_x );
-	check_priority( line_width, line_width_priority, plus_x );
-	//check_priority( line_width, line_width_priority, minus_y );
-	check_priority( line_width, line_width_priority, plus_y );
+	float line_detect = sqrt( x.r * x.r + y.r * y.r );
+	float priority = (
+		check_priority( color, plus_x )
+	+	check_priority( color, plus_y )
+	);
 
 	/*
 		出力：
 			R: アウトライン検出
-			G: 線分の太さ
-			B: 優先度
-			A: 未使用
+			G: なし
+			B: なし
 	*/
-	float use = float( 0.0 < line_width );
-	COLOR = vec4( clamp( filtered.r * luma_coef, 0.0, 1.0 ) * use, line_width, line_width_priority, 1.0 );
+	COLOR = vec4( float( 0.0 < line_detect ) * float( 0.0 < priority ), 0.0, 0.0, 1.0 );
 }

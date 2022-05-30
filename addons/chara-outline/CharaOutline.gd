@@ -9,18 +9,18 @@ extends Node
 
 class_name CharaOutline
 
-const group_name:String = "arlez80:charactor_outline"
+const group_name:String = "arlez80:character_outline"
 
-onready var viewport:Viewport = $Viewport
-onready var camera:Camera = $Viewport/Camera
-onready var sobel_filter:ColorRect = $Viewport/SobelFilter
-onready var outline_filter:ColorRect = $OutlineFilter
+onready var outline_viewport:Viewport = $OutlineViewport
+onready var outline_camera:Camera = $OutlineViewport/Camera
+onready var outline_filter:ColorRect = $OutlineViewport/DetectOutlineFilter
+onready var outline_draw:ColorRect = $OutlineDraw
 
 export(int, LAYERS_3D_RENDER) var layers_for_draw_target:int = 1 << 19
-var max_objects:int = 64
+var max_objects:int = 32
 
 func _ready( ):
-	self.camera.cull_mask = self.layers_for_draw_target
+	self.outline_camera.cull_mask = self.layers_for_draw_target
 	self._generate_nodes( )
 
 func _clear_all_nodes( ) -> void:
@@ -63,14 +63,15 @@ func _copy_mesh_instance( parent:Node, mi:MeshInstance, cor:CharaOutlineRegister
 	copyed.layers = self.layers_for_draw_target
 	mi.layers = mi.layers & ( ~self.layers_for_draw_target )
 
-	var factor:float = 1.0 / float( self.max_objects )
-	var matr: = SpatialMaterial.new( )
-	matr.flags_unshaded = true
+	var matr: = ShaderMaterial.new( )
+	matr.shader = preload("id_and_depth.shader")
 	if cor.hide:
-		matr.albedo_color = Color( 0.0, 0.0, cor.priority )
+		matr.set_shader_param("object_id", 0.0)
+		matr.set_shader_param("hide", 1.0 )
 	else:
-		matr.albedo_color = Color( ( cor.object_id + 1 ) * factor, cor.line_width, cor.priority )
-	matr.params_cull_mode = SpatialMaterial.CULL_DISABLED
+		matr.set_shader_param("object_id", float( cor.object_id + 1 ) / float( self.max_objects ))
+		matr.set_shader_param("hide", 0.0 )
+
 	copyed.material_override = matr
 
 	copyed.add_to_group( self.group_name )
@@ -79,15 +80,16 @@ func _process( delta:float ):
 	var screen_viewport: = self.get_viewport( )
 	if screen_viewport == null:
 		return
-	self.viewport.size = screen_viewport.size
-	self.sobel_filter.rect_size = screen_viewport.size
+
+	self.outline_viewport.size = screen_viewport.size
 	self.outline_filter.rect_size = screen_viewport.size
+	self.outline_draw.rect_size = screen_viewport.size
 	#$Debug.rect_size = screen_viewport.size
 
 	var src_camera: = screen_viewport.get_camera( )
-	if src_camera == null or self.camera == src_camera:
+	if src_camera == null or self.outline_camera == src_camera:
 		return
 
-	self.camera.cull_mask = self.layers_for_draw_target
-	self.camera.global_transform = src_camera.global_transform
-	self.camera.set_perspective(src_camera.fov, src_camera.near, src_camera.far)
+	self.outline_camera.cull_mask = self.layers_for_draw_target
+	self.outline_camera.global_transform = src_camera.global_transform
+	self.outline_camera.set_perspective(src_camera.fov, src_camera.near, src_camera.far)
