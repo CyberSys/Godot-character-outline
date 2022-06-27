@@ -9,9 +9,11 @@ extends EditorPlugin
 #
 
 func _enter_tree():
-	self.add_custom_type( "CharaOutlineRegister", "Node", preload("CharaOutlineRegister.gd"), preload("register_icon.png") )
-	self.add_custom_type( "CharaOutline", "Node", preload("CharaOutline.gd"), preload("icon.png") )
+	#self.add_custom_type( "CharaOutlineRegister", "Node", preload("CharaOutlineRegister.gd"), preload("register_icon.png") )
+	#self.add_custom_type( "CharaOutline", "Node", preload("CharaOutline.gd"), preload("icon.png") )
+	pass
 
 func _exit_tree():
-	self.remove_custom_type( "CharaOutline" )
-	self.remove_custom_type( "CharaOutlineRegister" )
+	#self.remove_custom_type( "CharaOutline" )
+	#self.remove_custom_type( "CharaOutlineRegister" )
+	pass

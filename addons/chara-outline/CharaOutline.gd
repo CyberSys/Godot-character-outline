@@ -7,19 +7,28 @@ extends Node
 # MIT License
 #
 
-class_name CharaOutline
+class_name CharaOutline, "icon.png"
 
 const group_name:String = "arlez80:character_outline"
 
-onready var outline_viewport:Viewport = $OutlineViewport
-onready var outline_camera:Camera = $OutlineViewport/Camera
-onready var outline_filter:ColorRect = $OutlineViewport/DetectOutlineFilter
-onready var outline_draw:ColorRect = $OutlineDraw
+var loaded_tscn:Node
+var outline_viewport:Viewport
+var outline_camera:Camera
+var outline_filter:ColorRect
+var outline_draw:ColorRect
 
 export(int, LAYERS_3D_RENDER) var layers_for_draw_target:int = 1 << 19
 var max_objects:int = 32
 
 func _ready( ):
+	self.loaded_tscn = preload("CharaOutlineBase.tscn").instance( )
+	self.add_child( self.loaded_tscn )
+
+	self.outline_viewport = self.loaded_tscn.get_node( "OutlineViewport" )
+	self.outline_camera = self.loaded_tscn.get_node( "OutlineViewport/Camera" )
+	self.outline_filter = self.loaded_tscn.get_node( "OutlineViewport/DetectOutlineFilter" )
+	self.outline_draw = self.loaded_tscn.get_node( "OutlineDraw" )
+
 	self.outline_camera.cull_mask = self.layers_for_draw_target
 	self._generate_nodes( )
 
